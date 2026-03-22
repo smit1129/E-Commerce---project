@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+{% block title %}Secure Checkout – ShopZone{% endblock %}
+
+{% block content %}
+<div class="page-wrap">
+  <h1 style="font-size:24px;font-weight:700;margin-bottom:20px;">
+    <i class="fas fa-lock me-2" style="color:#ff9900;"></i>Secure Checkout
+  </h1>
+
+  <div class="checkout-layout">
+    <div>
+
+      <!-- Step 1: Shipping -->
+      <div class="checkout-section">
+        <div class="checkout-section-hd">
+          <div class="step-circle">1</div>
+          <h4>Shipping Address</h4>
+        </div>
+        <div class="row g-3">
+          <div class="col-sm-6">
+            <label class="form-label-sm">First Name *</label>
+            <input type="text" class="form-control" placeholder="John" value="{{ session.get('username','') }}"/>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label-sm">Last Name *</label>
+            <input type="text" class="form-control" placeholder="Doe"/>
+          </div>
+          <div class="col-12">
+            <label class="form-label-sm">Email Address *</label>
+            <input type="email" class="form-control" value="{{ session.get('email','') }}"/>
+          </div>
+          <div class="col-12">
+            <label class="form-label-sm">Mobile Number *</label>
+            <input type="tel" class="form-control" placeholder="+91 98765 43210"/>
+          </div>
+          <div class="col-12">
+            <label class="form-label-sm">Street Address *</label>
+            <input type="text" class="form-control" placeholder="Flat No., Building, Street Name"/>
+          </div>
+          <div class="col-12">
+            <label class="form-label-sm">Area / Locality</label>
+            <input type="text" class="form-control" placeholder="Area, Colony, Sector"/>
+          </div>
+          <div class="col-sm-4">
+            <label class="form-label-sm">City *</label>
+            <input type="text" class="form-control" placeholder="Mumbai"/>
+          </div>
+          <div class="col-sm-4">
+            <label class="form-label-sm">State *</label>
+            <input type="text" class="form-control" placeholder="Maharashtra"/>
+          </div>
+          <div class="col-sm-4">
+            <label class="form-label-sm">PIN Code *</label>
+            <input type="text" class="form-control" placeholder="400001"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Delivery -->
+      <div class="checkout-section">
+        <div class="checkout-section-hd">
+          <div class="step-circle">2</div>
+          <h4>Delivery Option</h4>
+        </div>
+        <div class="radio-option selected">
+          <input type="radio" name="delivery" id="d1" checked/>
+          <div>
+            <div class="radio-option-label"><i class="fas fa-truck me-2" style="color:#007600;"></i>Standard FREE Delivery</div>
+            <div class="radio-option-sub">Estimated delivery: Tomorrow by 9 PM</div>
+          </div>
+          <span style="margin-left:auto;font-size:13px;font-weight:700;color:#007600;">FREE</span>
+        </div>
+        <div class="radio-option">
+          <input type="radio" name="delivery" id="d2"/>
+          <div>
+            <div class="radio-option-label"><i class="fas fa-bolt me-2" style="color:#ff9900;"></i>Express Delivery</div>
+            <div class="radio-option-sub">Estimated delivery: Today by 6 PM</div>
+          </div>
+          <span style="margin-left:auto;font-size:13px;font-weight:700;">₹4.99</span>
+        </div>
+      </div>
+
+      <!-- Step 3: Payment -->
+      <div class="checkout-section">
+        <div class="checkout-section-hd">
+          <div class="step-circle">3</div>
+          <h4>Payment Method</h4>
+        </div>
+        <div class="radio-option selected">
+          <input type="radio" name="pay" id="p1" checked/>
+          <div style="flex:1;">
+            <div class="radio-option-label"><i class="fas fa-credit-card me-2" style="color:#1a73e8;"></i>Credit / Debit / ATM Card</div>
+            <div class="radio-option-sub">Visa, Mastercard, Amex, Rupay</div>
+            <div class="row g-2 mt-2">
+              <div class="col-12">
+                <label class="form-label-sm">Card Number</label>
+                <input type="text" class="form-control" placeholder="1234  5678  9012  3456" maxlength="19"/>
+              </div>
+              <div class="col-6">
+                <label class="form-label-sm">Expiry Date</label>
+                <input type="text" class="form-control" placeholder="MM / YY"/>
+              </div>
+              <div class="col-6">
+                <label class="form-label-sm">CVV</label>
+                <input type="password" class="form-control" placeholder="•••" maxlength="4"/>
+              </div>
+              <div class="col-12">
+                <label class="form-label-sm">Name on Card</label>
+                <input type="text" class="form-control" placeholder="JOHN DOE"/>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="radio-option">
+          <input type="radio" name="pay" id="p2"/>
+          <div>
+            <div class="radio-option-label"><i class="fas fa-mobile-alt me-2" style="color:#5f6368;"></i>UPI</div>
+            <div class="radio-option-sub">Google Pay, PhonePe, Paytm, BHIM</div>
+          </div>
+        </div>
+        <div class="radio-option">
+          <input type="radio" name="pay" id="p3"/>
+          <div>
+            <div class="radio-option-label"><i class="fas fa-university me-2" style="color:#0066cc;"></i>Net Banking</div>
+            <div class="radio-option-sub">All major banks supported</div>
+          </div>
+        </div>
+        <div class="radio-option">
+          <input type="radio" name="pay" id="p4"/>
+          <div>
+            <div class="radio-option-label"><i class="fas fa-money-bill-wave me-2" style="color:#27ae60;"></i>Cash on Delivery</div>
+            <div class="radio-option-sub">Pay when you receive the package</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: Review -->
+      <div class="checkout-section">
+        <div class="checkout-section-hd">
+          <div class="step-circle">4</div>
+          <h4>Review Items ({{ products|length }})</h4>
+        </div>
+        {% for item in products %}
+        <div style="display:flex;gap:14px;align-items:center;padding:12px 0;border-bottom:1px solid #eee;">
+          <img src="{{ item.image_url }}" style="width:64px;height:60px;object-fit:cover;border-radius:6px;border:1px solid #eee;flex-shrink:0;"
+               onerror="this.src='https://placehold.co/64x60/f0f0f0/999?text=Img'"/>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ item.name }}</div>
+            <div style="font-size:12px;color:#555;margin-top:2px;">Qty: {{ item.qty }} &nbsp;·&nbsp; ₹{{ "%.2f"|format(item.price|float) }} each</div>
+          </div>
+          <div style="font-size:15px;font-weight:700;color:#b12704;white-space:nowrap;">₹{{ "%.2f"|format(item.subtotal|float) }}</div>
+        </div>
+        {% endfor %}
+      </div>
+
+    </div><!-- /left col -->
+
+    <!-- Summary -->
+    <div>
+      <div class="summary-box">
+        <h3>Order Summary</h3>
+        <div class="summary-row">
+          <span class="label">Items ({{ products|length }})</span>
+          <span class="val">₹ {{ "%.2f"|format(total|float) }}</span>
+        </div>
+        <div class="summary-row free">
+          <span class="label">Shipping</span>
+          <span class="val">FREE</span>
+        </div>
+        <div class="summary-row">
+          <span class="label">Tax (10%)</span>
+          <span class="val">₹ {{ "%.2f"|format(total|float * 0.1) }}</span>
+        </div>
+        <div class="summary-total">
+          <span class="label">Order Total</span>
+          <span class="val">₹ {{ "%.2f"|format(total|float * 1.1) }}</span>
+        </div>
+
+        <form action="{{ url_for('checkout') }}" method="post">
+          <button type="submit" class="place-order-btn">
+            <i class="fas fa-check-circle me-2"></i>Place Your Order
+          </button>
+        </form>
+
+        <p style="font-size:11px;color:#888;text-align:center;margin-top:10px;line-height:1.5;">
+          By placing your order, you agree to ShopZone's <a href="#" style="color:#007185;">Privacy Notice</a> and <a href="#" style="color:#007185;">Conditions of Use</a>.
+        </p>
+        <div style="text-align:center;margin-top:8px;">
+          <i class="fas fa-lock me-1" style="color:#007600;font-size:11px;"></i>
+          <span style="font-size:11px;color:#888;">128-bit SSL Encrypted</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

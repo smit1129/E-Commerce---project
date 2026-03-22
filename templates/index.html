@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+{% block title %}ShopZone – Shop Online for Electronics, Fashion & More{% endblock %}
+
+{% block content %}
+<div class="page-wrap">
+
+{% if request.path == '/' %}
+<!-- ═══ HERO ═══════════════════════════════════════════ -->
+<div class="hero mb-section">
+  <div class="row align-items-center g-0">
+    <div class="col-lg-7">
+      <div class="hero-eyebrow"><i class="fas fa-bolt"></i> LIMITED TIME DEALS</div>
+      <h1 class="hero-title">Shop Smart.<br><span>Live Better.</span></h1>
+      <p class="hero-sub">Millions of products. Unbeatable prices. Free & fast delivery on eligible orders.</p>
+      <div class="hero-btns">
+        <a href="#products" class="btn-primary-yellow">
+          <i class="fas fa-store"></i> Shop Now
+        </a>
+        <a href="{{ url_for('index', category='Electronics') }}" class="btn-outline-white">
+          <i class="fas fa-laptop"></i> Explore Electronics
+        </a>
+      </div>
+      <div class="hero-stats">
+        <div>
+          <div class="stat-val">10M+</div>
+          <div class="stat-label">Products</div>
+        </div>
+        <div>
+          <div class="stat-val">Free</div>
+          <div class="stat-label">Delivery</div>
+        </div>
+        <div>
+          <div class="stat-val">24/7</div>
+          <div class="stat-label">Support</div>
+        </div>
+        <div>
+          <div class="stat-val">30-day</div>
+          <div class="stat-label">Returns</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══ CATEGORY CARDS ════════════════════════════════ -->
+<div class="mb-section">
+  <div class="section-hd">
+    <div class="section-hd-title"><i class="fas fa-th-large"></i> Shop by Category</div>
+  </div>
+  <div class="cat-cards">
+    {% for cat, icon, color, bg, cnt in [
+      ('Electronics','fa-laptop','#1a73e8','#e8f0fe','245'),
+      ('Audio','fa-headphones','#d93025','#fce8e6','89'),
+      ('Footwear','fa-shoe-prints','#e37400','#fef3e2','312'),
+      ('Fashion','fa-tshirt','#7b1fa2','#f3e5f5','580'),
+      ('Wearables','fa-stopwatch','#0f9d58','#e6f4ea','76'),
+      ('Peripherals','fa-keyboard','#455a64','#eceff1','134')
+    ] %}
+    <a href="{{ url_for('index', category=cat) }}" class="cat-card">
+      <div class="cat-icon-wrap" style="background:{{ bg }};color:{{ color }};">
+        <i class="fas {{ icon }}"></i>
+      </div>
+      <div class="cat-name">{{ cat }}</div>
+      <div class="cat-count">{{ cnt }} items</div>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% if request.path == '/deals' %}
+<div class="section-hd mb-section">
+  <div class="section-hd-title">
+    🔥 Today's Deals
+  </div>
+</div>
+{% endif %}
+<!-- ═══ PRODUCTS SECTION ══════════════════════════════ -->
+<div id="products">
+  {% if search_query or selected_category %}
+  <div class="results-meta">
+    <div class="results-text">
+      {% if search_query %}
+        {{ products|length }} results for <strong>"{{ search_query }}"</strong>
+        {% if selected_category %} in <strong>{{ selected_category }}</strong>{% endif %}
+      {% else %}
+        <strong>{{ selected_category }}</strong> — {{ products|length }} products
+      {% endif %}
+    </div>
+    <a href="{{ url_for('index') }}" class="btn-clear">
+      <i class="fas fa-times"></i> Clear filter
+    </a>
+  </div>
+  {% else %}
+  <div class="section-hd mb-section" style="margin-bottom:16px;">
+    <div class="section-hd-title"><i class="fas fa-fire"></i> Featured Products</div>
+    <a href="{{ url_for('index') }}" class="section-hd-link">See all deals <i class="fas fa-arrow-right ms-1"></i></a>
+  </div>
+  {% endif %}
+
+  {% if products %}
+  <div class="product-grid">
+    {% for p in products %}
+    <div class="product-card">
+
+      <!-- Badge -->
+      {% if p['badge'] %}
+      {% set bmap = {'Best Seller':'badge-bestseller','New':'badge-new','Hot':'badge-hot','Sale':'badge-sale','Trending':'badge-trending','Choice':'badge-choice'} %}
+      <span class="card-badge {{ bmap.get(p['badge'],'badge-choice') }}">{{ p['badge'] }}</span>
+      {% endif %}
+
+      <!-- Image -->
+      <a href="{{ url_for('product_detail', pid=p['id']) }}" style="display:block;">
+        <div class="card-img-box">
+          <img src="{{ p['image_url'] }}" alt="{{ p['name'] }}" loading="lazy"
+               onerror="this.src='https://placehold.co/400x300/f0f0f0/999?text=No+Image'"/>
+        </div>
+      </a>
+
+      <!-- Body -->
+      <div class="card-body">
+        <a href="{{ url_for('product_detail', pid=p['id']) }}" class="card-title">{{ p['name'] }}</a>
+
+        <div class="star-row">
+          <div class="stars">
+            {% set r = p['rating']|float %}
+            {% for i in range(5) %}
+              {% if i < r|int %}<i class="fas fa-star"></i>
+              {% elif (r - i) >= 0.5 %}<i class="fas fa-star-half-alt"></i>
+              {% else %}<i class="far fa-star"></i>{% endif %}
+            {% endfor %}
+          </div>
+          <span class="review-cnt">({{ p['review_count'] }})</span>
+        </div>
+
+        <div class="price-row">
+          <span class="price-now">₹ {{ "%.2f"|format(p['price']|float) }}</span>
+          {% if p['original_price'] %}
+          <span class="price-was">₹{{ "%.2f"|format(p['original_price']|float) }}</span>
+          <span class="price-save">{{ ((1 - p['price']/p['original_price'])*100)|int }}% off</span>
+          {% endif %}
+        </div>
+
+        <div class="delivery-row">
+          <span class="free"><i class="fas fa-truck me-1"></i>FREE</span> delivery tomorrow
+        </div>
+
+        <form action="{{ url_for('add_to_cart', pid=p['id']) }}" method="post" style="margin-top:auto;padding-top:10px;">
+          <input type="hidden" name="qty" value="1"/>
+          <button type="submit" class="btn-cart">
+            <i class="fas fa-cart-plus"></i> Add to Cart
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div class="empty-state">
+    <i class="fas fa-search d-block mx-auto mb-3"></i>
+    <h3>No products found</h3>
+    <p>Try adjusting your search or browse all categories below.</p>
+    <a href="{{ url_for('index') }}" class="btn-primary-yellow" style="display:inline-flex;margin-top:8px;">
+      <i class="fas fa-store"></i> Browse All Products
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+</div><!-- /page-wrap -->
+{% endblock %}
+

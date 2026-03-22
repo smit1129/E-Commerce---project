@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Order Confirmed – ShopZone{% endblock %}
+{% block content %}
+<div class="success-page">
+  <div class="success-card">
+    <div class="success-check"><i class="fas fa-check"></i></div>
+    <h2>Order Placed Successfully!</h2>
+    <p>Thank you for shopping with ShopZone. Your order has been confirmed and will be on its way soon.</p>
+
+    <div class="order-info">
+      <div class="order-info-row"><i class="fas fa-hashtag"></i> <span>Order #SZ-{{ range(100000,999999)|random }}</span></div>
+      <div class="order-info-row"><i class="fas fa-truck"></i> <span><strong>Estimated Delivery:</strong> Tomorrow by 9 PM</span></div>
+      <div class="order-info-row"><i class="fas fa-shield-alt"></i> <span>Protected by ShopZone A-to-z Guarantee</span></div>
+      <div class="order-info-row"><i class="fas fa-undo"></i> <span>Free returns within 30 days</span></div>
+    </div>
+
+    <a href="{{ url_for('index') }}" class="btn-primary-yellow" style="display:inline-flex;gap:8px;">
+      <i class="fas fa-store"></i> Continue Shopping
+    </a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Today's Deals{% endblock %}
+
+{% block content %}
+
+<div class="page-wrap">
+
+<div class="section-hd mb-section">
+  <div class="section-hd-title">
+     Today's Deals
+  </div>
+</div>
+
+<div class="product-grid">
+
+{% for p in products %}
+
+<div class="product-card">
+
+{% if p['badge'] %}
+{% set bmap = {
+  'Best Seller':'badge-bestseller',
+  'New':'badge-new',
+  'Hot':'badge-hot',
+  'Sale':'badge-sale',
+  'Trending':'badge-trending',
+  'Choice':'badge-choice'
+} %}
+<span class="card-badge {{ bmap.get(p['badge'], 'badge-choice') }}">
+  {{ p['badge'] }}
+</span>
+{% endif %}
+
+<a href="{{ url_for('product_detail', pid=p['id']) }}">
+<div class="card-img-box">
+<img src="{{ p['image_url'] }}">
+</div>
+</a>
+
+<div class="card-body">
+
+<a href="{{ url_for('product_detail', pid=p['id']) }}" class="card-title">
+{{ p['name'] }}
+</a>
+
+<div class="price-row">
+
+<span class="price-now">
+₹ {{ "%.2f"|format(p['price']) }}
+</span>
+
+{% if p['original_price'] %}
+<span class="price-was">
+₹ {{ "%.2f"|format(p['original_price']) }}
+</span>
+
+<span class="price-save">
+{{ ((1 - p['price']/p['original_price'])*100)|int }}% off
+</span>
+{% endif %}
+
+</div>
+
+<form action="{{ url_for('add_to_cart', pid=p['id']) }}" method="post">
+
+<input type="hidden" name="qty" value="1">
+
+<button class="btn-cart">
+Add to Cart
+</button>
+
+</form>
+
+</div>
+
+</div>
+
+{% endfor %}
+
+</div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+{% block title %}{{ product['name'] }} – ShopZone{% endblock %}
+
+{% block content %}
+<div class="page-wrap">
+
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+      <li class="breadcrumb-item"><a href="{{ url_for('index', category=product['category']) }}">{{ product['category'] }}</a></li>
+      <li class="breadcrumb-item active text-truncate" style="max-width:300px;">{{ product['name'] }}</li>
+    </ol>
+  </nav>
+
+  <!-- Detail card -->
+  <div class="detail-wrap">
+    <div class="row g-4">
+
+      <!-- Image -->
+      <div class="col-md-5 col-lg-4">
+        <div class="detail-img-wrap">
+          <img src="{{ product['image_url'] }}" alt="{{ product['name'] }}" class="detail-img"
+               onerror="this.src='https://placehold.co/600x450/f0f0f0/999?text=No+Image'"/>
+        </div>
+      </div>
+
+      <!-- Info -->
+      <div class="col-md-4 col-lg-5">
+        {% if product['badge'] %}
+        {% set bmap = {'Best Seller':'badge-bestseller','New':'badge-new','Hot':'badge-hot','Sale':'badge-sale','Trending':'badge-trending','Choice':'badge-choice'} %}
+        <span class="card-badge {{ bmap.get(product['badge'],'badge-choice') }}" style="position:static;display:inline-block;margin-bottom:10px;">
+          {{ product['badge'] }}
+        </span>
+        {% endif %}
+
+        <h1 class="detail-title">{{ product['name'] }}</h1>
+
+        <div class="detail-rating">
+          <div class="stars">
+            {% set r = product['rating']|float %}
+            {% for i in range(5) %}
+              {% if i < r|int %}<i class="fas fa-star"></i>
+              {% elif (r-i) >= 0.5 %}<i class="fas fa-star-half-alt"></i>
+              {% else %}<i class="far fa-star"></i>{% endif %}
+            {% endfor %}
+          </div>
+          <span class="rating-num">{{ product['rating'] }}</span>
+          <a href="#" class="review-link">{{ product['review_count'] }} ratings</a>
+          <span style="color:#aaa;">|</span>
+          <span style="font-size:13px;color:#007185;">{{ product['category'] }}</span>
+        </div>
+
+        <div class="detail-divider"></div>
+
+        <div style="margin-bottom:16px;">
+          <span class="detail-price-big">₹{{ "%.2f"|format(product['price']|float) }}</span>
+          {% if product['original_price'] %}
+          <div style="margin-top:4px;">
+            <span style="font-size:13px;color:#555;">M.R.P.:</span>
+            <span class="detail-price-orig">₹{{ "%.2f"|format(product['original_price']|float) }}</span>
+            <span class="detail-savings ms-2">
+              You Save ₹{{ "%.2f"|format(product['original_price']|float - product['price']|float) }}
+              ({{ ((1 - product['price']/product['original_price'])*100)|int }}%)
+            </span>
+          </div>
+          {% endif %}
+        </div>
+
+        <div style="background:#f7f9fa;border-radius:8px;padding:14px;margin-bottom:16px;font-size:13px;">
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+            <i class="fas fa-truck" style="color:#007185;width:16px;"></i>
+            <span><strong>FREE Delivery</strong> Tomorrow — Order in next <strong style="color:#c7511f;">4 hrs 22 mins</strong></span>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <i class="fas fa-undo" style="color:#007185;width:16px;"></i>
+            <span>Free returns within 30 days</span>
+          </div>
+        </div>
+
+        {% if product['stock']|int > 20 %}
+        <div class="stock-ok mb-3"><i class="fas fa-check-circle me-1"></i>In Stock</div>
+        {% elif product['stock']|int > 0 %}
+        <div class="stock-warn mb-3"><i class="fas fa-exclamation-circle me-1"></i>Only {{ product['stock'] }} left in stock!</div>
+        {% else %}
+        <div class="stock-none mb-3"><i class="fas fa-times-circle me-1"></i>Out of Stock</div>
+        {% endif %}
+
+        <p class="detail-desc">{{ product['description'] }}</p>
+
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;">
+          <span style="background:#eaf3fc;color:#1a73e8;font-size:11px;font-weight:600;padding:3px 10px;border-radius:4px;border:1px solid #c5d9f0;">{{ product['category'] }}</span>
+          <span style="background:#eafaea;color:#1a7f37;font-size:11px;font-weight:600;padding:3px 10px;border-radius:4px;border:1px solid #b2dbb2;">Free Returns</span>
+          <span style="background:#fff8ec;color:#b45309;font-size:11px;font-weight:600;padding:3px 10px;border-radius:4px;border:1px solid #f5d8a0;">Genuine Product</span>
+        </div>
+      </div>
+
+      <!-- Buy Box -->
+      <div class="col-md-3 col-lg-3">
+        <div class="buy-box">
+          <div class="buy-box-price">₹{{ "%.2f"|format(product['price']|float) }}</div>
+          <div style="font-size:12px;color:#007600;margin-bottom:12px;"><i class="fas fa-truck me-1"></i><strong>FREE Delivery</strong> Tomorrow</div>
+
+          {% if product['stock']|int > 0 %}
+          <div style="font-size:13px;color:#007600;margin-bottom:14px;"><i class="fas fa-check-circle me-1"></i>In Stock</div>
+
+          <form action="{{ url_for('add_to_cart', pid=product['id']) }}" method="post">
+            <div style="margin-bottom:12px;">
+              <label class="form-label-sm">Quantity:</label>
+              <div class="qty-control">
+                <button type="button" class="qty-btn qty-btn-minus">−</button>
+                <input type="number" name="qty" class="qty-num" value="1" min="1" max="{{ product['stock'] }}"/>
+                <button type="button" class="qty-btn qty-btn-plus">+</button>
+              </div>
+            </div>
+            <button type="submit" class="btn-add-cart-big" style="margin-bottom:8px;">
+              <i class="fas fa-cart-plus"></i> Add to Cart
+            </button>
+          </form>
+          <a href="{{ url_for('checkout') }}" class="btn-buy-now">
+            <i class="fas fa-bolt"></i> Buy Now
+          </a>
+          {% else %}
+          <button class="btn-add-cart-big" disabled style="background:#d5d9d9;cursor:not-allowed;">Out of Stock</button>
+          {% endif %}
+
+          <div class="detail-divider" style="margin:16px 0;"></div>
+          <div style="display:flex;flex-direction:column;gap:7px;">
+            <div class="trust-item"><i class="fas fa-shield-alt"></i> Secure transaction</div>
+            <div class="trust-item"><i class="fas fa-undo"></i> Free 30-day returns</div>
+            <div class="trust-item"><i class="fas fa-award"></i> Genuine product</div>
+            <div class="trust-item"><i class="fas fa-headset"></i> 24/7 customer support</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /row -->
+  </div><!-- /detail-wrap -->
+
+  <!-- Related Products -->
+  {% if related %}
+  <div style="margin-top:40px;">
+    <div class="section-hd">
+      <div class="section-hd-title"><i class="fas fa-th-large"></i> Related Products</div>
+      <a href="{{ url_for('index', category=product['category']) }}" class="section-hd-link">See all in {{ product['category'] }} <i class="fas fa-arrow-right ms-1"></i></a>
+    </div>
+    <div class="related-grid">
+      {% for p in related %}
+      <div class="product-card">
+        {% if p['badge'] %}
+        {% set bmap = {'Best Seller':'badge-bestseller','New':'badge-new','Hot':'badge-hot','Sale':'badge-sale','Trending':'badge-trending','Choice':'badge-choice'} %}
+        <span class="card-badge {{ bmap.get(p['badge'],'badge-choice') }}">{{ p['badge'] }}</span>
+        {% endif %}
+        <a href="{{ url_for('product_detail', pid=p['id']) }}">
+          <div class="card-img-box">
+            <img src="{{ p['image_url'] }}" alt="{{ p['name'] }}" loading="lazy"
+                 onerror="this.src='https://placehold.co/400x300/f0f0f0/999?text=No+Image'"/>
+          </div>
+        </a>
+        <div class="card-body">
+          <a href="{{ url_for('product_detail', pid=p['id']) }}" class="card-title">{{ p['name'] }}</a>
+          <div class="price-row">
+            <span class="price-now">₹{{ "%.2f"|format(p['price']|float) }}</span>
+            {% if p['original_price'] %}
+            <span class="price-was">₹{{ "%.2f"|format(p['original_price']|float) }}</span>
+            {% endif %}
+          </div>
+          <form action="{{ url_for('add_to_cart', pid=p['id']) }}" method="post" style="margin-top:auto;padding-top:8px;">
+            <input type="hidden" name="qty" value="1"/>
+            <button type="submit" class="btn-cart"><i class="fas fa-cart-plus"></i> Add to Cart</button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

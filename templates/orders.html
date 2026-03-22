@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="page-wrap">
+
+<h2>📦 My Orders</h2>
+
+<table class="table">
+
+<tr>
+<th>Product</th>
+<th>Qty</th>
+<th>Price</th>
+<th>Date</th>
+</tr>
+
+{% for o in orders %}
+
+<tr>
+<td>{{ o.name }}</td>
+<td>{{ o.quantity }}</td>
+<td>₹ {{ "%.2f"|format(o.total_price) }}</td>
+<td>{{ o.order_date }}</td>
+</tr>
+
+{% endfor %}
+
+</table>
+
+</div>
+
+{% endblock %}

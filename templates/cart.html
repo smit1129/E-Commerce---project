@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% block title %}Shopping Cart – ShopZone{% endblock %}
+
+{% block content %}
+<div class="page-wrap">
+  <h1 style="font-size:24px;font-weight:700;margin-bottom:20px;">
+    <i class="fas fa-shopping-cart me-2" style="color:#ff9900;"></i>Shopping Cart
+  </h1>
+
+  {% if products %}
+  <div class="cart-layout">
+
+    <!-- Items -->
+    <div>
+      <div class="cart-box">
+        <div class="cart-header">
+          <h2>Your Items</h2>
+          <span class="item-count">{{ products|length }} item{% if products|length != 1 %}s{% endif %}</span>
+        </div>
+
+        {% for item in products %}
+        <div class="cart-item">
+          <img src="{{ item.image_url }}" alt="{{ item.name }}" class="cart-item-img"
+               onerror="this.src='https://placehold.co/100x90/f0f0f0/999?text=Img'"/>
+
+          <div>
+            <div class="cart-item-name">{{ item.name }}</div>
+            <div class="cart-item-price">Unit price: ₹ {{ "%.2f"|format(item.price|float) }}</div>
+            <div class="cart-item-stock"><i class="fas fa-check-circle me-1"></i>In Stock &nbsp;·&nbsp; <i class="fas fa-truck me-1"></i>FREE Delivery</div>
+
+            <div class="cart-qty-form">
+              <form action="{{ url_for('update_cart', pid=item.id) }}" method="post" style="display:inline-flex;align-items:center;gap:6px;">
+                <span style="font-size:12px;color:#555;">Qty:</span>
+                <select name="qty" class="cart-qty-select" onchange="this.form.submit()">
+                  {% for n in range(1,11) %}
+                  <option value="{{ n }}" {% if n == item.qty %}selected{% endif %}>{{ n }}</option>
+                  {% endfor %}
+                </select>
+              </form>
+              <span style="color:#aaa;font-size:11px;">|</span>
+              <a href="{{ url_for('remove_from_cart', pid=item.id) }}" class="btn-remove"
+                 onclick="return confirm('Remove this item?')">
+                <i class="fas fa-trash-alt me-1"></i>Remove
+              </a>
+              <span style="color:#aaa;font-size:11px;">|</span>
+              <a href="#" class="btn-remove"><i class="fas fa-heart me-1"></i>Save for later</a>
+            </div>
+          </div>
+
+          <div class="cart-item-subtotal">₹{{ "%.2f"|format(item.subtotal|float) }}</div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div style="margin-top:16px;">
+        <a href="{{ url_for('index') }}" style="display:inline-flex;align-items:center;gap:7px;color:#007185;font-size:14px;font-weight:500;text-decoration:none;">
+          <i class="fas fa-arrow-left"></i> Continue Shopping
+        </a>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div>
+      <div class="summary-box">
+        <h3>Order Summary</h3>
+
+        <div class="summary-row">
+          <span class="label">Subtotal ({{ products|length }} item{% if products|length!=1 %}s{% endif %})</span>
+          <span class="val">₹{{ "%.2f"|format(total|float) }}</span>
+        </div>
+        <div class="summary-row free">
+          <span class="label"><i class="fas fa-truck me-1"></i> Shipping</span>
+          <span class="val">FREE</span>
+        </div>
+        <div class="summary-row">
+          <span class="label">Estimated Tax (10%)</span>
+          <span class="val">₹{{ "%.2f"|format(total|float * 0.1) }}</span>
+        </div>
+        {% if total > 0 %}
+        <div style="background:#fff8ec;border:1px solid #f5d8a0;border-radius:6px;padding:8px 12px;font-size:12px;color:#b45309;margin:8px 0;">
+          <i class="fas fa-tag me-1"></i> Your order qualifies for <strong>FREE Shipping!</strong>
+        </div>
+        {% endif %}
+
+        <div class="summary-total">
+          <span class="label">Order Total</span>
+          <span class="val">₹{{ "%.2f"|format(total|float * 1.1) }}</span>
+        </div>
+
+        <a href="{{ url_for('checkout') }}" class="btn-proceed">
+          <i class="fas fa-lock"></i> Proceed to Checkout
+        </a>
+
+        <div style="text-align:center;margin-top:10px;font-size:11px;color:#888;">
+          <i class="fas fa-shield-alt me-1" style="color:#007600;"></i>Safe & Secure SSL Checkout
+        </div>
+        <div class="pay-icons" style="margin-top:12px;">
+          <i class="fab fa-cc-visa" style="color:#1a1f71;"></i>
+          <i class="fab fa-cc-mastercard" style="color:#eb001b;"></i>
+          <i class="fab fa-cc-amex" style="color:#2e77bc;"></i>
+          <i class="fab fa-cc-paypal" style="color:#003087;"></i>
+          <i class="fab fa-google-pay" style="color:#555;"></i>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  {% else %}
+  <div class="empty-state" style="max-width:560px;margin:0 auto;">
+    <i class="fas fa-shopping-cart"></i>
+    <h3>Your cart is empty</h3>
+    <p>Looks like you haven't added anything to your cart yet.</p>
+    <a href="{{ url_for('index') }}" class="btn-primary-yellow" style="display:inline-flex;margin:0 auto;">
+      <i class="fas fa-store"></i> Start Shopping
+    </a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

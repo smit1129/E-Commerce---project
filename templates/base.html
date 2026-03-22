@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}ShopZone{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
+</head>
+<body>
+
+<!-- ── TOP DELIVERY BAR ──────────────────────────────── -->
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="topbar-left">
+      <i class="fas fa-map-marker-alt"></i>
+      <span>Deliver to <strong>India</strong></span>
+    </div>
+    <div class="topbar-right">
+      {% if session.get('user_id') %}
+        <span class="topbar-link">Hello, <strong>{{ session.get('username','User') }}</strong></span>
+        <span class="topbar-divider">|</span>
+        <a href="{{ url_for('my_orders') }}" class="topbar-link">📦 My Orders</a>
+        <a href="{{ url_for('logout') }}" class="topbar-link">Sign Out</a>
+        <span class="topbar-divider">|</span>
+        <a href="{{ url_for('cart') }}" class="topbar-link"><i class="fas fa-heart me-1"></i>🛒 Cart</a>
+      {% else %}
+        <a href="{{ url_for('login') }}" class="topbar-link">Sign In</a>
+        <span class="topbar-divider">|</span>
+        <a href="{{ url_for('register') }}" class="topbar-link">New customer? Start here</a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- ── MAIN NAV ──────────────────────────────────────── -->
+<nav class="main-nav">
+  <div class="nav-inner">
+
+    <!-- Logo -->
+    <a href="{{ url_for('index') }}" class="site-logo">
+      <span class="logo-text">Shop</span><span class="logo-dot">Zone</span>
+      <span class="logo-badge">PRIME</span>
+    </a>
+
+    <!-- Search -->
+    <div class="nav-search">
+      <form action="{{ url_for('index') }}" method="get">
+        <div class="search-wrap">
+          <select name="category" class="search-cat">
+            <option value="">All Departments</option>
+            {% for cat in ['Electronics','Audio','Footwear','Fashion','Wearables','Peripherals'] %}
+            <option value="{{ cat }}" {% if request.args.get('category')==cat %}selected{% endif %}>{{ cat }}</option>
+            {% endfor %}
+          </select>
+          <input type="search" name="q" class="search-input"
+                 placeholder="Search products, brands and categories…"
+                 value="{{ request.args.get('q','') }}" autocomplete="off"/>
+          <button type="submit" class="search-btn" aria-label="Search">
+            <i class="fas fa-search"></i>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Nav Actions -->
+    <div class="nav-actions">
+      
+{% if session.get('user_id') %}
+<div class="dropdown d-none d-lg-flex">
+  <a href="#" class="nav-action flex-column dropdown-toggle" 
+     style="align-items:flex-start;gap:0;" 
+     data-bs-toggle="dropdown" aria-expanded="false">
+    <span class="nav-action-label">Hello, {{ session.get('username','').split(' ')[0] }}</span>
+    <span class="nav-action-value">Account &amp; Lists <i class="fas fa-caret-down" style="font-size:10px;"></i></span>
+  </a>
+  <ul class="dropdown-menu dropdown-menu-end" style="min-width:200px;margin-top:8px;">
+    <li>
+      <div style="padding:10px 16px;font-size:13px;color:#555;">
+        Signed in as <strong>{{ session.get('username') }}</strong>
+      </div>
+    </li>
+    <li><hr class="dropdown-divider"></li>
+    <li>
+      <a class="dropdown-item" href="{{ url_for('my_orders') }}">
+        <i class="fas fa-box me-2" style="color:#ff9900;"></i>My Orders
+      </a>
+    </li>
+    <li>
+      <a class="dropdown-item" href="{{ url_for('cart') }}">
+        <i class="fas fa-shopping-cart me-2" style="color:#ff9900;"></i>My Cart
+      </a>
+    </li>
+    <li><hr class="dropdown-divider"></li>
+    <li>
+      <a class="dropdown-item text-danger" href="{{ url_for('logout') }}">
+        <i class="fas fa-sign-out-alt me-2"></i>Sign Out
+      </a>
+    </li>
+  </ul>
+</div>
+{% else %}
+<a href="{{ url_for('login') }}" class="nav-action d-none d-lg-flex flex-column" style="align-items:flex-start;gap:0;">
+  <span class="nav-action-label">Hello, sign in</span>
+  <span class="nav-action-value">Account &amp; Lists <i class="fas fa-caret-down" style="font-size:10px;"></i></span>
+</a>
+{% endif %}
+      <a href="{{ url_for('cart') }}" class="nav-action cart-btn">
+        <div style="position:relative;display:inline-block;">
+          <i class="cart-icon fas fa-shopping-cart"></i>
+          {% if cart_count() > 0 %}
+          <span class="cart-count-badge">{{ cart_count() }}</span>
+          {% endif %}
+        </div>
+        <span class="cart-word d-none d-md-inline">Cart</span>
+      </a>
+    </div>
+
+  </div>
+</nav>
+
+<!-- ── CATEGORY STRIP ────────────────────────────────── -->
+<div class="cat-strip">
+  <div class="cat-strip-inner">
+    <a href="{{ url_for('index') }}"
+   class="cat-strip-link {% if request.path == '/' %}active{% endif %}">
+   <i class="fas fa-bars"></i> All
+</a>
+    {% for cat, icon in [
+      ('Electronics','fa-laptop'),('Audio','fa-headphones'),('Footwear','fa-shoe-prints'),
+      ('Fashion','fa-tshirt'),('Wearables','fa-stopwatch'),('Peripherals','fa-keyboard')
+    ] %}
+    <a href="{{ url_for('index', category=cat) }}"
+       class="cat-strip-link {% if request.args.get('category')==cat %}active{% endif %}">
+      <i class="fas {{ icon }}"></i> {{ cat }}
+    </a>
+    {% endfor %}
+    <a href="{{ url_for('deals') }}"
+    class="cat-strip-link deals-link {% if request.path == '/deals' %}active{% endif %}">
+    <i class="fas fa-fire"></i> Today's Deals
+    </a>
+    <a href="{{ url_for('cart') }}" class="cat-strip-link">
+      <i class="fas fa-truck"></i> Fast Delivery
+    </a>
+  </div>
+</div>
+
+<!-- ── FLASH MESSAGES ────────────────────────────────── -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div class="flash-zone">
+  {% for cat, msg in messages %}
+  <div class="alert alert-{{ cat }} alert-dismissible fade show" role="alert">
+    {% if cat == 'success' %}<i class="fas fa-check-circle me-2"></i>{% endif %}
+    {% if cat == 'danger'  %}<i class="fas fa-exclamation-circle me-2"></i>{% endif %}
+    {% if cat == 'warning' %}<i class="fas fa-exclamation-triangle me-2"></i>{% endif %}
+    {% if cat == 'info'    %}<i class="fas fa-info-circle me-2"></i>{% endif %}
+    {{ msg }}
+    <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert"></button>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
+
+<!-- ── MAIN CONTENT ──────────────────────────────────── -->
+<main>{% block content %}{% endblock %}</main>
+
+<!-- ── FOOTER ───────────────────────────────────────── -->
+
+<footer class="site-footer">
+  <div class="footer-main">
+    <div class="footer-col">
+      <div class="footer-col-title">Get to Know Us</div>
+      <ul>
+        <li><a href="#">About ShopZone</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Your Account</div>
+      <ul>
+        {% if session.get('user_id') %}
+        <li><a href="{{ url_for('my_orders') }}">Your Orders</a></li>
+        <li><a href="{{ url_for('logout') }}">Sign Out</a></li>
+        {% else %}
+        <li><a href="{{ url_for('login') }}">Sign In</a></li>
+        <li><a href="{{ url_for('register') }}">Create Account</a></li>
+        {% endif %}
+      </ul>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Legal</div>
+      <ul>
+        <li><a href="#">Privacy Notice</a></li>
+        <li><a href="#">Conditions of Use</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-bottom-inner">
+      <div><span class="logo-text">Shop</span><span class="logo-dot">Zone</span></div>
+      <span class="footer-copy">© 2024 ShopZone — College Project</span>
+      <div class="footer-legal">
+        <a href="#">Privacy Notice</a>
+        <a href="#">Conditions of Use</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Auto-dismiss alerts after 4s
+setTimeout(() => {
+  document.querySelectorAll('.alert').forEach(el => {
+    try { bootstrap.Alert.getOrCreateInstance(el).close(); } catch(e){}
+  });
+}, 4000);
+// Qty controls
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('qty-btn-minus')) {
+    const inp = e.target.parentElement.querySelector('.qty-num');
+    if (inp && +inp.value > 1) inp.value = +inp.value - 1;
+  }
+  if (e.target.classList.contains('qty-btn-plus')) {
+    const inp = e.target.parentElement.querySelector('.qty-num');
+    if (inp) inp.value = +inp.value + 1;
+  }
+});
+</script>
+</body>
+</html>
