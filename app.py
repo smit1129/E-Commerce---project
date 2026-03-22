@@ -6,7 +6,7 @@ from functools import wraps
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'shopzone-secret-key-2024'
-DATABASE = os.path.join(os.path.dirname(__file__), 'ecommerce.db')
+DATABASE =  'ecommerce.db'
 
 def get_db():
     if 'db' not in g:
