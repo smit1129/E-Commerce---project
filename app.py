@@ -9,7 +9,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'shopzone-secret-key-2024'
 
 # Supabase PostgreSQL URL
-DATABASE_URL = os.environ.get('DATABASE_URL', 'DATABASE_URL', 'postgresql://postgres.ijgtygmmnsfuunycwbgz:Smitgamit@2025@aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres')
+DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://postgres.ijgtygmmnsfuunycwbgz:Smitgamit@2025@aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres')
 
 def get_db():
     if 'db' not in g:
