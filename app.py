@@ -5,7 +5,7 @@ from flask import Flask, render_template, redirect, url_for, request, session, f
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 
-app = Flask(__name__, static_folder='static', static_url_path='/static')
+app = Flask(__name__)
 app.config['SECRET_KEY'] = 'shopzone-secret-key-2024'
 
 # Supabase PostgreSQL URL
