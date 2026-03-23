@@ -568,6 +568,7 @@ img { display: block; max-width: 100%; }
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-decoration: none;
+  min-height:38px;
 }
 .card-title:hover { color: var(--teal); }
 
@@ -1080,6 +1081,7 @@ img { display: block; max-width: 100%; }
   }
   .nav-actions {
     order: 2;
+    margin-left:auto;
   }
   .nav-action-label,
   .nav-action-value {
@@ -1197,4 +1199,14 @@ img { display: block; max-width: 100%; }
   .cart-item {
     grid-template-columns: 70px 1fr;
   }
+}
+
+@media (max-width:768px){
+.search-wrap{
+width:100%;
+}
+.search-cat{
+width:90px;
+font-size:11px;
+}
 }
