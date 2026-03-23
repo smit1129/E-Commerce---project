@@ -9,8 +9,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'shopzone-secret-key-2024'
 
 # Supabase PostgreSQL URL
-DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://postgres.ijgtygmmnsfuunycwbgz:Smitgamit@2025@aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres')
-
+DATABASE_URL = os.environ.get("DATABASE_URL")
 def get_db():
     if 'db' not in g:
         conn = psycopg2.connect(DATABASE_URL)
@@ -123,6 +122,7 @@ def init_db():
         except Exception as exc:
             print(f'⚠️ Could not seed: {exc}')
     db.close()
+init_db()
 
 @app.route('/')
 def index():
