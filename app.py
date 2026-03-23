@@ -1,17 +1,20 @@
-import sqlite3
 import os
+import psycopg2
+import psycopg2.extras
 from flask import Flask, render_template, redirect, url_for, request, session, flash, g
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static', static_url_path='/static')
 app.config['SECRET_KEY'] = 'shopzone-secret-key-2024'
-DATABASE =  'ecommerce.db'
+
+# Supabase PostgreSQL URL
+DATABASE_URL = os.environ.get('DATABASE_URL', 'DATABASE_URL', 'postgresql://postgres.ijgtygmmnsfuunycwbgz:Smitgamit@2025@aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres')
 
 def get_db():
     if 'db' not in g:
-        g.db = sqlite3.connect(DATABASE)
-        g.db.row_factory = sqlite3.Row
+        conn = psycopg2.connect(DATABASE_URL)
+        g.db = conn
     return g.db
 
 @app.teardown_appcontext
@@ -20,13 +23,18 @@ def close_db(e=None):
     if db: db.close()
 
 def query(sql, args=(), one=False):
-    cur = get_db().execute(sql, args)
+    sql = sql.replace('?', '%s')
+    cur = get_db().cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute(sql, args)
     rv = cur.fetchall()
+    get_db().commit()
     return (rv[0] if rv else None) if one else rv
 
 def execute(sql, args=()):
+    sql = sql.replace('?', '%s')
     db = get_db()
-    cur = db.execute(sql, args)
+    cur = db.cursor()
+    cur.execute(sql, args)
     db.commit()
     return cur.lastrowid
 
@@ -62,18 +70,18 @@ def cart_total():
 app.jinja_env.globals['cart_count'] = cart_count
 
 def init_db():
-    """Create tables and seed products if the DB is empty."""
-    db = sqlite3.connect(DATABASE)
-    # Users table (never dropped)
-    db.execute('''CREATE TABLE IF NOT EXISTS users (
-        id       INTEGER PRIMARY KEY AUTOINCREMENT,
+    db = psycopg2.connect(DATABASE_URL)
+    cur = db.cursor()
+
+    cur.execute('''CREATE TABLE IF NOT EXISTS users (
+        id       SERIAL PRIMARY KEY,
         username TEXT UNIQUE NOT NULL,
         email    TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL
     )''')
-    # Products table
-    db.execute('''CREATE TABLE IF NOT EXISTS products (
-        id             INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    cur.execute('''CREATE TABLE IF NOT EXISTS products (
+        id             SERIAL PRIMARY KEY,
         name           TEXT    NOT NULL,
         description    TEXT    NOT NULL,
         price          REAL    NOT NULL,
@@ -85,24 +93,35 @@ def init_db():
         review_count   INTEGER DEFAULT 0,
         badge          TEXT
     )''')
+
+    cur.execute('''CREATE TABLE IF NOT EXISTS orders (
+        id          SERIAL PRIMARY KEY,
+        user_id     INTEGER,
+        product_id  INTEGER,
+        quantity    INTEGER,
+        total_price REAL,
+        order_date  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )''')
+
     db.commit()
 
-    if db.execute('SELECT COUNT(*) FROM products').fetchone()[0] == 0:
-        # Import and run the seeder only when the table is empty
+    cur.execute('SELECT COUNT(*) FROM products')
+    count = cur.fetchone()[0]
+
+    if count == 0:
         try:
             from seed_db import PRODUCTS
-            db.executemany(
+            cur.executemany(
                 '''INSERT INTO products
                    (name,description,price,original_price,category,
                     image_url,stock,rating,review_count,badge)
-                   VALUES (?,?,?,?,?,?,?,?,?,?)''',
+                   VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)''',
                 PRODUCTS,
             )
             db.commit()
-            n = db.execute('SELECT COUNT(*) FROM products').fetchone()[0]
-            print(f'✅  {n} products seeded from seed_db.py')
+            print('✅ Products seeded!')
         except Exception as exc:
-            print(f'⚠️  Could not seed products: {exc}')
+            print(f'⚠️ Could not seed: {exc}')
     db.close()
 
 @app.route('/')
@@ -117,7 +136,7 @@ def index():
         products = query('SELECT * FROM products WHERE category=?',[cat])
     else:
         products = query('SELECT * FROM products')
-    cats = [r[0] for r in get_db().execute('SELECT DISTINCT category FROM products').fetchall()]
+    cats = [r['category'] for r in query('SELECT DISTINCT category FROM products')]
     return render_template('index.html', products=products, categories=cats, search_query=q, selected_category=cat)
 
 @app.route('/product/<int:pid>')
@@ -170,7 +189,6 @@ def remove_from_cart(pid):
 @login_required
 def checkout():
     cart = session.get("cart", {})
-
     if not cart:
         flash("Your cart is empty.", "warning")
         return redirect(url_for("index"))
@@ -180,11 +198,10 @@ def checkout():
     total = 0
 
     for pid, item in cart.items():
-        qty = item["qty"]  # always int from save_cart()
-
-        p = conn.execute(
-            "SELECT * FROM products WHERE id=?", (pid,)
-        ).fetchone()
+        qty = item["qty"]
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("SELECT * FROM products WHERE id=%s", (pid,))
+        p = cur.fetchone()
 
         if p:
             subtotal = float(p["price"]) * int(qty)
@@ -200,16 +217,12 @@ def checkout():
 
     if request.method == "POST":
         user_id = session.get("user_id")
-
+        cur = conn.cursor()
         for item in products:
-            conn.execute(
-                """
-                INSERT INTO orders (user_id, product_id, quantity, total_price)
-                VALUES (?, ?, ?, ?)
-                """,
+            cur.execute(
+                "INSERT INTO orders (user_id, product_id, quantity, total_price) VALUES (%s, %s, %s, %s)",
                 (user_id, item["id"], item["qty"], item["subtotal"])
             )
-
         conn.commit()
         session["cart"] = {}
         session.modified = True
@@ -225,26 +238,14 @@ def order_success():
 @app.route("/my-orders")
 @login_required
 def my_orders():
-
     user_id = session.get("user_id")
-
-    conn = get_db()
-
-    orders = conn.execute(
-        """
-        SELECT o.id,
-               p.name,
-               o.quantity,
-               o.total_price,
-               o.order_date
+    orders = query("""
+        SELECT o.id, p.name, o.quantity, o.total_price, o.order_date
         FROM orders o
         JOIN products p ON o.product_id = p.id
         WHERE o.user_id=?
         ORDER BY o.order_date DESC
-        """,
-        (user_id,)
-    ).fetchall()
-
+    """, (user_id,))
     return render_template("orders.html", orders=orders)
 
 @app.route('/register', methods=['GET','POST'])
@@ -259,7 +260,14 @@ def register():
         elif query('SELECT id FROM users WHERE username=?',[username],one=True):
             flash('Username already taken.','danger')
         else:
-            uid = execute('INSERT INTO users (username,email,password) VALUES (?,?,?)',[username,email,generate_password_hash(password)])
+            db = get_db()
+            cur = db.cursor()
+            cur.execute(
+                'INSERT INTO users (username,email,password) VALUES (%s,%s,%s) RETURNING id',
+                [username, email, generate_password_hash(password)]
+            )
+            uid = cur.fetchone()[0]
+            db.commit()
             session['user_id'] = uid
             session['username'] = username
             session['email'] = email
@@ -291,18 +299,13 @@ def logout():
 
 @app.route('/deals')
 def deals():
-
     products = query("""
         SELECT * FROM products
         WHERE original_price > price
         ORDER BY (original_price - price) DESC
     """)
-
-    return render_template(
-        "deals.html",
-        products=products
-    )
+    return render_template("deals.html", products=products)
 
 if __name__ == '__main__':
     init_db()
-    app.run(debug=True,host='0.0.0.0', port=5000)
+    app.run(debug=False, host='0.0.0.0', port=5000)
