@@ -93,6 +93,23 @@ def init_db():
         badge          TEXT
     )''')
 
+    cur.execute('''CREATE TABLE IF NOT EXISTS admins (
+        id       SERIAL PRIMARY KEY,
+        username TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL
+    )''')
+    db.commit()
+
+    # Default admin create karo
+    cur.execute('SELECT COUNT(*) FROM admins')
+    if cur.fetchone()[0] == 0:
+        cur.execute(
+            'INSERT INTO admins (username, password) VALUES (%s, %s)',
+            ['admin', generate_password_hash('admin@123')]
+        )
+        db.commit()
+        print('✅ Default admin created!')
+
     cur.execute('''CREATE TABLE IF NOT EXISTS orders (
         id          SERIAL PRIMARY KEY,
         user_id     INTEGER,
@@ -101,6 +118,7 @@ def init_db():
         total_price REAL,
         order_date  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''')
+
 
     db.commit()
 
@@ -305,6 +323,212 @@ def deals():
         ORDER BY (original_price - price) DESC
     """)
     return render_template("deals.html", products=products)
+
+# ══════════════════════════════════════════════════════
+# ADMIN PANEL ROUTES
+# ══════════════════════════════════════════════════════
+
+def admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get('admin_logged_in'):
+            flash('Please login as admin.', 'warning')
+            return redirect(url_for('admin_login'))
+        return f(*args, **kwargs)
+    return decorated
+
+# ── Admin Login ────────────────────────────────────────
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    if session.get('admin_logged_in'):
+        return redirect(url_for('admin_dashboard'))
+    if request.method == 'POST':
+        username = request.form['username'].strip()
+        password = request.form['password']
+        admin = query('SELECT * FROM admins WHERE username=%s', [username], one=True)
+        if admin and check_password_hash(admin['password'], password):
+            session['admin_logged_in'] = True
+            session['admin_username'] = admin['username']
+            flash('Welcome back, Admin!', 'success')
+            return redirect(url_for('admin_dashboard'))
+        flash('Invalid credentials!', 'danger')
+    return render_template('admin/login.html')
+
+@app.route('/admin/logout')
+def admin_logout():
+    session.pop('admin_logged_in', None)
+    session.pop('admin_username', None)
+    flash('Admin logged out.', 'info')
+    return redirect(url_for('admin_login'))
+
+# ── Admin Dashboard ────────────────────────────────────
+@app.route('/admin')
+@app.route('/admin/dashboard')
+@admin_required
+def admin_dashboard():
+    total_products = query('SELECT COUNT(*) as c FROM products', one=True)['c']
+    total_users    = query('SELECT COUNT(*) as c FROM users', one=True)['c']
+    total_orders   = query('SELECT COUNT(*) as c FROM orders', one=True)['c']
+    revenue_row    = query('SELECT SUM(total_price) as s FROM orders', one=True)
+    revenue        = revenue_row['s'] if revenue_row['s'] else 0
+    recent_orders  = query('''
+        SELECT o.id, u.username, p.name as product_name,
+               o.quantity, o.total_price, o.order_date
+        FROM orders o
+        JOIN users u ON o.user_id = u.id
+        JOIN products p ON o.product_id = p.id
+        ORDER BY o.order_date DESC LIMIT 8
+    ''')
+    return render_template('admin/dashboard.html',
+        total_products=total_products,
+        total_users=total_users,
+        total_orders=total_orders,
+        revenue=revenue,
+        recent_orders=recent_orders
+    )
+
+# ── Products ───────────────────────────────────────────
+@app.route('/admin/products')
+@admin_required
+def admin_products():
+    search = request.args.get('q', '').strip()
+    if search:
+        products = query(
+            'SELECT * FROM products WHERE name ILIKE %s OR category ILIKE %s ORDER BY id DESC',
+            [f'%{search}%', f'%{search}%']
+        )
+    else:
+        products = query('SELECT * FROM products ORDER BY id DESC')
+    return render_template('admin/products.html', products=products, search=search)
+
+@app.route('/admin/add-product', methods=['GET', 'POST'])
+@admin_required
+def admin_add_product():
+    if request.method == 'POST':
+        name           = request.form['name'].strip()
+        description    = request.form['description'].strip()
+        price          = float(request.form['price'])
+        original_price = request.form.get('original_price', '').strip()
+        original_price = float(original_price) if original_price else None
+        category       = request.form['category']
+        image_url      = request.form['image_url'].strip()
+        stock          = int(request.form['stock'])
+        rating         = float(request.form['rating'])
+        badge          = request.form.get('badge', '').strip() or None
+
+        if not all([name, description, price, category, image_url]):
+            flash('Please fill all required fields!', 'danger')
+            return render_template('admin/add_product.html')
+
+        db = get_db()
+        cur = db.cursor()
+        cur.execute('''
+            INSERT INTO products
+            (name, description, price, original_price, category,
+             image_url, stock, rating, badge)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        ''', [name, description, price, original_price, category,
+              image_url, stock, rating, badge])
+        db.commit()
+        flash(f'Product "{name}" added successfully!', 'success')
+        return redirect(url_for('admin_products'))
+    return render_template('admin/add_product.html')
+
+@app.route('/admin/edit-product/<int:pid>', methods=['GET', 'POST'])
+@admin_required
+def admin_edit_product(pid):
+    product = query('SELECT * FROM products WHERE id=%s', [pid], one=True)
+    if not product:
+        flash('Product not found!', 'danger')
+        return redirect(url_for('admin_products'))
+    if request.method == 'POST':
+        name           = request.form['name'].strip()
+        description    = request.form['description'].strip()
+        price          = float(request.form['price'])
+        original_price = request.form.get('original_price', '').strip()
+        original_price = float(original_price) if original_price else None
+        category       = request.form['category']
+        image_url      = request.form['image_url'].strip()
+        stock          = int(request.form['stock'])
+        rating         = float(request.form['rating'])
+        badge          = request.form.get('badge', '').strip() or None
+
+        db = get_db()
+        cur = db.cursor()
+        cur.execute('''
+            UPDATE products SET
+            name=%s, description=%s, price=%s, original_price=%s,
+            category=%s, image_url=%s, stock=%s, rating=%s, badge=%s
+            WHERE id=%s
+        ''', [name, description, price, original_price, category,
+              image_url, stock, rating, badge, pid])
+        db.commit()
+        flash(f'Product "{name}" updated!', 'success')
+        return redirect(url_for('admin_products'))
+    return render_template('admin/edit_product.html', product=product)
+
+@app.route('/admin/delete-product/<int:pid>')
+@admin_required
+def admin_delete_product(pid):
+    product = query('SELECT name FROM products WHERE id=%s', [pid], one=True)
+    if product:
+        db = get_db()
+        cur = db.cursor()
+        cur.execute('DELETE FROM products WHERE id=%s', [pid])
+        db.commit()
+        flash(f'Product deleted!', 'success')
+    return redirect(url_for('admin_products'))
+
+# ── Orders ─────────────────────────────────────────────
+@app.route('/admin/orders')
+@admin_required
+def admin_orders():
+    search = request.args.get('q', '').strip()
+    if search:
+        orders = query('''
+            SELECT o.id, u.username, u.email, p.name as product_name,
+                   o.quantity, o.total_price, o.order_date
+            FROM orders o
+            JOIN users u ON o.user_id = u.id
+            JOIN products p ON o.product_id = p.id
+            WHERE u.username ILIKE %s OR p.name ILIKE %s
+            ORDER BY o.order_date DESC
+        ''', [f'%{search}%', f'%{search}%'])
+    else:
+        orders = query('''
+            SELECT o.id, u.username, u.email, p.name as product_name,
+                   o.quantity, o.total_price, o.order_date
+            FROM orders o
+            JOIN users u ON o.user_id = u.id
+            JOIN products p ON o.product_id = p.id
+            ORDER BY o.order_date DESC
+        ''')
+    return render_template('admin/orders.html', orders=orders, search=search)
+
+# ── Users ──────────────────────────────────────────────
+@app.route('/admin/users')
+@admin_required
+def admin_users():
+    search = request.args.get('q', '').strip()
+    if search:
+        users = query(
+            'SELECT * FROM users WHERE username ILIKE %s OR email ILIKE %s ORDER BY id DESC',
+            [f'%{search}%', f'%{search}%']
+        )
+    else:
+        users = query('SELECT * FROM users ORDER BY id DESC')
+    return render_template('admin/users.html', users=users, search=search)
+
+@app.route('/admin/delete-user/<int:uid>')
+@admin_required
+def admin_delete_user(uid):
+    db = get_db()
+    cur = db.cursor()
+    cur.execute('DELETE FROM orders WHERE user_id=%s', [uid])
+    cur.execute('DELETE FROM users WHERE id=%s', [uid])
+    db.commit()
+    flash('User deleted!', 'success')
+    return redirect(url_for('admin_users'))
 
 if __name__ == '__main__':
     init_db()

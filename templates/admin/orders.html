@@ -1,0 +1,45 @@
+{% extends 'admin/base.html' %}
+{% block title %}Orders{% endblock %}
+{% block page_title %}<i class="fas fa-shopping-bag me-2" style="color:#1a73e8;"></i>Orders{% endblock %}
+
+{% block content %}
+<div class="admin-table-wrap">
+  <div class="admin-table-head">
+    <h3>All Orders ({{ orders|length }})</h3>
+    <form method="get">
+      <div class="search-bar">
+        <input type="text" name="q" placeholder="Search by user or product..." value="{{ search }}"/>
+        <button type="submit"><i class="fas fa-search"></i></button>
+      </div>
+    </form>
+  </div>
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Order ID</th>
+        <th>User</th>
+        <th>Email</th>
+        <th>Product</th>
+        <th>Qty</th>
+        <th>Amount</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for o in orders %}
+      <tr>
+        <td><strong>#{{ o.id }}</strong></td>
+        <td style="font-weight:600;">{{ o.username }}</td>
+        <td style="color:#888;font-size:12px;">{{ o.email }}</td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ o.product_name }}</td>
+        <td>{{ o.quantity }}</td>
+        <td style="font-weight:700;color:#b12704;">₹{{ "%.2f"|format(o.total_price|float) }}</td>
+        <td style="color:#888;font-size:12px;">{{ o.order_date }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7" style="text-align:center;padding:24px;color:#888;">No orders found</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

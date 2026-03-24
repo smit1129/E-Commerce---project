@@ -1,0 +1,52 @@
+{% extends 'admin/base.html' %}
+{% block title %}Users{% endblock %}
+{% block page_title %}<i class="fas fa-users me-2" style="color:#8e44ad;"></i>Users{% endblock %}
+
+{% block content %}
+<div class="admin-table-wrap">
+  <div class="admin-table-head">
+    <h3>All Users ({{ users|length }})</h3>
+    <form method="get">
+      <div class="search-bar">
+        <input type="text" name="q" placeholder="Search users..." value="{{ search }}"/>
+        <button type="submit"><i class="fas fa-search"></i></button>
+      </div>
+    </form>
+  </div>
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Username</th>
+        <th>Email</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in users %}
+      <tr>
+        <td style="color:#888;">#{{ u.id }}</td>
+        <td style="font-weight:600;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#ff9900,#febd69);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;">
+              {{ u.username[0].upper() }}
+            </div>
+            {{ u.username }}
+          </div>
+        </td>
+        <td style="color:#666;">{{ u.email }}</td>
+        <td>
+          <a href="{{ url_for('admin_delete_user', uid=u.id) }}"
+             class="btn-admin-delete"
+             onclick="return confirm('Delete user \'{{ u.username }}\'? This will also delete their orders!')">
+            <i class="fas fa-trash"></i> Delete
+          </a>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4" style="text-align:center;padding:24px;color:#888;">No users found</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

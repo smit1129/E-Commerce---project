@@ -1,0 +1,73 @@
+{% extends 'admin/base.html' %}
+{% block title %}Edit Product{% endblock %}
+{% block page_title %}<i class="fas fa-edit me-2" style="color:#ff9900;"></i>Edit Product{% endblock %}
+
+{% block content %}
+<div class="admin-form-card">
+  <div style="margin-bottom:20px;display:flex;align-items:center;gap:12px;">
+    <img src="{{ product.image_url }}" style="width:60px;height:54px;object-fit:cover;border-radius:8px;"
+         onerror="this.src='https://placehold.co/60x54/f0f0f0/999?text=Img'"/>
+    <div>
+      <div style="font-weight:700;font-size:14px;">{{ product.name }}</div>
+      <div style="font-size:12px;color:#888;">ID: #{{ product.id }}</div>
+    </div>
+  </div>
+  <form method="post">
+    <div class="row g-3">
+      <div class="col-12">
+        <label class="admin-label">Product Name *</label>
+        <input type="text" name="name" class="admin-input" value="{{ product.name }}" required/>
+      </div>
+      <div class="col-12">
+        <label class="admin-label">Description *</label>
+        <textarea name="description" class="admin-input" rows="4" required style="resize:vertical;">{{ product.description }}</textarea>
+      </div>
+      <div class="col-sm-6">
+        <label class="admin-label">Price (₹) *</label>
+        <input type="number" name="price" class="admin-input" step="0.01" value="{{ product.price }}" required/>
+      </div>
+      <div class="col-sm-6">
+        <label class="admin-label">Original Price (₹)</label>
+        <input type="number" name="original_price" class="admin-input" step="0.01" value="{{ product.original_price or '' }}"/>
+      </div>
+      <div class="col-sm-6">
+        <label class="admin-label">Category *</label>
+        <select name="category" class="admin-input" required>
+          {% for cat in ['Electronics','Audio','Footwear','Fashion','Wearables','Peripherals'] %}
+          <option value="{{ cat }}" {% if product.category == cat %}selected{% endif %}>{{ cat }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-sm-6">
+        <label class="admin-label">Badge</label>
+        <select name="badge" class="admin-input">
+          <option value="">No Badge</option>
+          {% for b in ['Best Seller','New','Hot','Sale','Trending','Choice','Luxury'] %}
+          <option value="{{ b }}" {% if product.badge == b %}selected{% endif %}>{{ b }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-12">
+        <label class="admin-label">Image URL *</label>
+        <input type="text" name="image_url" class="admin-input" value="{{ product.image_url }}" required/>
+      </div>
+      <div class="col-sm-6">
+        <label class="admin-label">Stock *</label>
+        <input type="number" name="stock" class="admin-input" value="{{ product.stock }}" min="0" required/>
+      </div>
+      <div class="col-sm-6">
+        <label class="admin-label">Rating (1-5)</label>
+        <input type="number" name="rating" class="admin-input" step="0.1" min="1" max="5" value="{{ product.rating }}"/>
+      </div>
+      <div class="col-12" style="margin-top:8px;display:flex;gap:10px;">
+        <button type="submit" class="btn-admin-primary" style="padding:10px 24px;">
+          <i class="fas fa-save"></i> Save Changes
+        </button>
+        <a href="{{ url_for('admin_products') }}" class="btn-admin-edit" style="padding:10px 16px;">
+          <i class="fas fa-times"></i> Cancel
+        </a>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}
