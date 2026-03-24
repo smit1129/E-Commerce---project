@@ -100,15 +100,16 @@ def init_db():
     )''')
     db.commit()
 
-    # Default admin create karo
+    
     cur.execute('SELECT COUNT(*) FROM admins')
     if cur.fetchone()[0] == 0:
-        cur.execute(
-            'INSERT INTO admins (username, password) VALUES (%s, %s)',
-            ['admin', generate_password_hash('admin@123')]
-        )
-        db.commit()
-        print('✅ Default admin created!')
+        hashed = generate_password_hash('smitt011', method='pbkdf2:sha256')
+    cur.execute(
+        'INSERT INTO admins (username, password) VALUES (%s, %s)',
+        ['smit', hashed]
+    )
+    db.commit()
+    print('✅ Default admin created!')
 
     cur.execute('''CREATE TABLE IF NOT EXISTS orders (
         id          SERIAL PRIMARY KEY,
@@ -300,7 +301,7 @@ def login():
         email = request.form['email'].strip()
         password = request.form['password']
         user = query('SELECT * FROM users WHERE email=?',[email],one=True)
-        if user and check_password_hash(user['password'],password):
+        if user and check_password_hash(str(user['password']),password):
             session['user_id'] = user['id']
             session['username'] = user['username']
             session['email'] = user['email']
