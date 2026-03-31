@@ -104,10 +104,10 @@ def init_db():
     cur.execute('SELECT COUNT(*) FROM admins')
     if cur.fetchone()[0] == 0:
         hashed = generate_password_hash('smitt011', method='pbkdf2:sha256')
-    cur.execute(
+        cur.execute(
         'INSERT INTO admins (username, password) VALUES (%s, %s)',
         ['smit', hashed]
-    )
+        )
     db.commit()
     print('✅ Default admin created!')
 
