@@ -1,8 +1,7 @@
 import psycopg2
 import os
 
-DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://postgres.ijgtygmmnsfuunycwbgz:Smitgamit@2025@aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres')
-
+DATABASE_URL = os.environ.get('DATABASE_URL')
 PRODUCTS = [
     ('Apple MacBook Pro 14" M3 Pro',
         'Supercharged by the M3 Pro chip with a 12-core CPU and 18-core GPU. Brilliant 14.2-inch Liquid Retina XDR display with ProMotion, up to 120 Hz. Up to 22 hours of battery life and MagSafe 3 charging. Thunderbolt 4 ports, HDMI 2.1, SDXC card slot. Available in Space Black and Silver.',
