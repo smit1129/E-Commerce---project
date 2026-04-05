@@ -8,8 +8,8 @@ from functools import wraps
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'shopzone-secret-key-2024'
 
-# Supabase PostgreSQL URL
 DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://postgres.ijgtygmmnsfuunycwbgz:Shopzone2025!@aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres')
+
 def get_db():
     if 'db' not in g:
         conn = psycopg2.connect(DATABASE_URL)
@@ -43,6 +43,15 @@ def login_required(f):
         if 'user_id' not in session:
             flash('Please login to continue.', 'warning')
             return redirect(url_for('login', next=request.path))
+        return f(*args, **kwargs)
+    return decorated
+
+def admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get('admin_logged_in'):
+            flash('Please login as admin.', 'warning')
+            return redirect(url_for('admin_login'))
         return f(*args, **kwargs)
     return decorated
 
@@ -93,24 +102,6 @@ def init_db():
         badge          TEXT
     )''')
 
-    cur.execute('''CREATE TABLE IF NOT EXISTS admins (
-        id       SERIAL PRIMARY KEY,
-        username TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL
-    )''')
-    db.commit()
-
-    
-    cur.execute('SELECT COUNT(*) FROM admins')
-    if cur.fetchone()[0] == 0:
-        hashed = generate_password_hash('smitt011', method='pbkdf2:sha256')
-        cur.execute(
-        'INSERT INTO admins (username, password) VALUES (%s, %s)',
-        ['smit', hashed]
-        )
-    db.commit()
-    print('✅ Default admin created!')
-
     cur.execute('''CREATE TABLE IF NOT EXISTS orders (
         id          SERIAL PRIMARY KEY,
         user_id     INTEGER,
@@ -120,13 +111,16 @@ def init_db():
         order_date  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''')
 
+    cur.execute('''CREATE TABLE IF NOT EXISTS admins (
+        id       SERIAL PRIMARY KEY,
+        username TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL
+    )''')
 
     db.commit()
 
     cur.execute('SELECT COUNT(*) FROM products')
-    count = cur.fetchone()[0]
-
-    if count == 0:
+    if cur.fetchone()[0] == 0:
         try:
             from seed_db import PRODUCTS
             cur.executemany(
@@ -140,19 +134,23 @@ def init_db():
             print('✅ Products seeded!')
         except Exception as exc:
             print(f'⚠️ Could not seed: {exc}')
+
     db.close()
-init_db()
+
+# ══════════════════════════════════════════════════════
+# MAIN ROUTES
+# ══════════════════════════════════════════════════════
 
 @app.route('/')
 def index():
     q = request.args.get('q', '').strip()
     cat = request.args.get('category', '').strip()
     if q and cat:
-        products = query('SELECT * FROM products WHERE category=? AND (name LIKE ? OR description LIKE ?)',[cat,f'%{q}%',f'%{q}%'])
+        products = query('SELECT * FROM products WHERE category=? AND (name LIKE ? OR description LIKE ?)', [cat, f'%{q}%', f'%{q}%'])
     elif q:
-        products = query('SELECT * FROM products WHERE name LIKE ? OR description LIKE ?',[f'%{q}%',f'%{q}%'])
+        products = query('SELECT * FROM products WHERE name LIKE ? OR description LIKE ?', [f'%{q}%', f'%{q}%'])
     elif cat:
-        products = query('SELECT * FROM products WHERE category=?',[cat])
+        products = query('SELECT * FROM products WHERE category=?', [cat])
     else:
         products = query('SELECT * FROM products')
     cats = [r['category'] for r in query('SELECT DISTINCT category FROM products')]
@@ -162,36 +160,36 @@ def index():
 def product_detail(pid):
     product = query('SELECT * FROM products WHERE id=?', [pid], one=True)
     if not product:
-        flash('Product not found.','danger')
+        flash('Product not found.', 'danger')
         return redirect(url_for('index'))
-    related = query('SELECT * FROM products WHERE category=? AND id!=? LIMIT 4',[product['category'],pid])
+    related = query('SELECT * FROM products WHERE category=? AND id!=? LIMIT 4', [product['category'], pid])
     return render_template('product_detail.html', product=product, related=related)
 
 @app.route('/add-to-cart/<int:pid>', methods=['POST'])
 def add_to_cart(pid):
-    product = query('SELECT * FROM products WHERE id=?',[pid],one=True)
+    product = query('SELECT * FROM products WHERE id=?', [pid], one=True)
     if not product: return redirect(url_for('index'))
-    qty = int(request.form.get('qty',1))
+    qty = int(request.form.get('qty', 1))
     cart = get_cart()
     key = str(pid)
     if key in cart: cart[key]['qty'] += qty
-    else: cart[key] = {'name':product['name'],'price':product['price'],'image_url':product['image_url'],'qty':qty}
+    else: cart[key] = {'name': product['name'], 'price': product['price'], 'image_url': product['image_url'], 'qty': qty}
     save_cart(cart)
-    flash(f'"{product["name"]}" added to cart!','success')
+    flash(f'"{product["name"]}" added to cart!', 'success')
     return redirect(request.referrer or url_for('index'))
 
 @app.route('/cart')
 def cart():
     cart_data = get_cart()
-    items = [{'id':k,**v,'subtotal':v['price']*v['qty']} for k,v in cart_data.items()]
+    items = [{'id': k, **v, 'subtotal': v['price'] * v['qty']} for k, v in cart_data.items()]
     return render_template('cart.html', products=items, total=cart_total())
 
 @app.route('/update-cart/<pid>', methods=['POST'])
 def update_cart(pid):
     cart = get_cart()
-    qty = int(request.form.get('qty',1))
+    qty = int(request.form.get('qty', 1))
     if pid in cart:
-        if qty<=0: del cart[pid]
+        if qty <= 0: del cart[pid]
         else: cart[pid]['qty'] = qty
     save_cart(cart)
     return redirect(url_for('cart'))
@@ -201,7 +199,7 @@ def remove_from_cart(pid):
     cart = get_cart()
     cart.pop(pid, None)
     save_cart(cart)
-    flash('Item removed from cart.','info')
+    flash('Item removed from cart.', 'info')
     return redirect(url_for('cart'))
 
 @app.route("/checkout", methods=["GET", "POST"])
@@ -221,17 +219,16 @@ def checkout():
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute("SELECT * FROM products WHERE id=%s", (pid,))
         p = cur.fetchone()
-
         if p:
             subtotal = float(p["price"]) * int(qty)
             total += subtotal
             products.append({
-                "id":        p["id"],
-                "name":      p["name"],
-                "price":     float(p["price"]),
+                "id": p["id"],
+                "name": p["name"],
+                "price": float(p["price"]),
                 "image_url": p["image_url"],
-                "qty":       int(qty),
-                "subtotal":  subtotal,
+                "qty": int(qty),
+                "subtotal": subtotal,
             })
 
     if request.method == "POST":
@@ -267,17 +264,17 @@ def my_orders():
     """, (user_id,))
     return render_template("orders.html", orders=orders)
 
-@app.route('/register', methods=['GET','POST'])
+@app.route('/register', methods=['GET', 'POST'])
 def register():
     if 'user_id' in session: return redirect(url_for('index'))
     if request.method == 'POST':
         username = request.form['username'].strip()
         email = request.form['email'].strip()
         password = request.form['password']
-        if query('SELECT id FROM users WHERE email=?',[email],one=True):
-            flash('Email already registered.','danger')
-        elif query('SELECT id FROM users WHERE username=?',[username],one=True):
-            flash('Username already taken.','danger')
+        if query('SELECT id FROM users WHERE email=?', [email], one=True):
+            flash('Email already registered.', 'danger')
+        elif query('SELECT id FROM users WHERE username=?', [username], one=True):
+            flash('Username already taken.', 'danger')
         else:
             db = get_db()
             cur = db.cursor()
@@ -290,30 +287,30 @@ def register():
             session['user_id'] = uid
             session['username'] = username
             session['email'] = email
-            flash(f'Welcome, {username}! Account created.','success')
+            flash(f'Welcome, {username}! Account created.', 'success')
             return redirect(url_for('index'))
     return render_template('register.html')
 
-@app.route('/login', methods=['GET','POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     if 'user_id' in session: return redirect(url_for('index'))
     if request.method == 'POST':
         email = request.form['email'].strip()
         password = request.form['password']
-        user = query('SELECT * FROM users WHERE email=?',[email],one=True)
-        if user and check_password_hash(str(user['password']),password):
+        user = query('SELECT * FROM users WHERE email=?', [email], one=True)
+        if user and check_password_hash(str(user['password']), password):
             session['user_id'] = user['id']
             session['username'] = user['username']
             session['email'] = user['email']
-            flash(f'Welcome back, {user["username"]}!','success')
+            flash(f'Welcome back, {user["username"]}!', 'success')
             return redirect(request.args.get('next') or url_for('index'))
-        flash('Invalid email or password.','danger')
+        flash('Invalid email or password.', 'danger')
     return render_template('login.html')
 
 @app.route('/logout')
 def logout():
     session.clear()
-    flash('You have been logged out.','info')
+    flash('You have been logged out.', 'info')
     return redirect(url_for('index'))
 
 @app.route('/deals')
@@ -329,16 +326,6 @@ def deals():
 # ADMIN PANEL ROUTES
 # ══════════════════════════════════════════════════════
 
-def admin_required(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        if not session.get('admin_logged_in'):
-            flash('Please login as admin.', 'warning')
-            return redirect(url_for('admin_login'))
-        return f(*args, **kwargs)
-    return decorated
-
-# ── Admin Login ────────────────────────────────────────
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
     if session.get('admin_logged_in'):
@@ -347,11 +334,16 @@ def admin_login():
         username = request.form['username'].strip()
         password = request.form['password']
         admin = query('SELECT * FROM admins WHERE username=%s', [username], one=True)
-        if admin and check_password_hash(admin['password'], password):
-            session['admin_logged_in'] = True
-            session['admin_username'] = admin['username']
-            flash('Welcome back, Admin!', 'success')
-            return redirect(url_for('admin_dashboard'))
+        if admin:
+            try:
+                password_ok = check_password_hash(str(admin['password']), password)
+            except Exception:
+                password_ok = (str(admin['password']) == password)
+            if password_ok:
+                session['admin_logged_in'] = True
+                session['admin_username'] = admin['username']
+                flash('Welcome back, Admin!', 'success')
+                return redirect(url_for('admin_dashboard'))
         flash('Invalid credentials!', 'danger')
     return render_template('admin/login.html')
 
@@ -362,7 +354,6 @@ def admin_logout():
     flash('Admin logged out.', 'info')
     return redirect(url_for('admin_login'))
 
-# ── Admin Dashboard ────────────────────────────────────
 @app.route('/admin')
 @app.route('/admin/dashboard')
 @admin_required
@@ -388,7 +379,6 @@ def admin_dashboard():
         recent_orders=recent_orders
     )
 
-# ── Products ───────────────────────────────────────────
 @app.route('/admin/products')
 @admin_required
 def admin_products():
@@ -477,10 +467,9 @@ def admin_delete_product(pid):
         cur = db.cursor()
         cur.execute('DELETE FROM products WHERE id=%s', [pid])
         db.commit()
-        flash(f'Product deleted!', 'success')
+        flash('Product deleted!', 'success')
     return redirect(url_for('admin_products'))
 
-# ── Orders ─────────────────────────────────────────────
 @app.route('/admin/orders')
 @admin_required
 def admin_orders():
@@ -506,7 +495,6 @@ def admin_orders():
         ''')
     return render_template('admin/orders.html', orders=orders, search=search)
 
-# ── Users ──────────────────────────────────────────────
 @app.route('/admin/users')
 @admin_required
 def admin_users():
