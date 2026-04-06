@@ -334,16 +334,11 @@ def admin_login():
         username = request.form['username'].strip()
         password = request.form['password']
         admin = query('SELECT * FROM admins WHERE username=%s', [username], one=True)
-        if admin:
-            try:
-                password_ok = check_password_hash(str(admin['password']), password)
-            except Exception:
-                password_ok = (str(admin['password']) == password)
-            if password_ok:
-                session['admin_logged_in'] = True
-                session['admin_username'] = admin['username']
-                flash('Welcome back, Admin!', 'success')
-                return redirect(url_for('admin_dashboard'))
+        if admin and str(admin['password']) == password:
+            session['admin_logged_in'] = True
+            session['admin_username'] = admin['username']
+            flash('Welcome back, Admin!', 'success')
+            return redirect(url_for('admin_dashboard'))
         flash('Invalid credentials!', 'danger')
     return render_template('admin/login.html')
 
