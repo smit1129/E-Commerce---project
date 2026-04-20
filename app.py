@@ -517,6 +517,7 @@ def admin_delete_user(uid):
     flash('User deleted!', 'success')
     return redirect(url_for('admin_users'))
 
-if __name__ == '__main__':
-    init_db()
-    app.run(debug=False, host='0.0.0.0', port=5000)
+init_db()
+
+# Vercel expects variable named "app"
+app = app
