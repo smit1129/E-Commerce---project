@@ -39,24 +39,77 @@
 <nav class="main-nav">
   <div class="nav-inner">
 
-    <!-- Logo -->
-    <a href="{{ url_for('index') }}" class="site-logo">
-      <span class="logo-text">Shop</span><span class="logo-dot">Zone</span>
-      <span class="logo-badge">PRIME</span>
-    </a>
+    <!-- Row 1: Logo + Actions -->
+    <div class="nav-row-1">
+      <a href="{{ url_for('index') }}" class="site-logo">
+        <span class="logo-text">Shop</span><span class="logo-dot">Zone</span>
+        <span class="logo-badge">PRIME</span>
+      </a>
 
-    <!-- Search -->
-    <div class="nav-search">
-      <form action="{{ url_for('index') }}" method="get">
+      <div class="nav-actions">
+        {% if session.get('user_id') %}
+        <div class="dropdown">
+          <a href="#" class="nav-action flex-column dropdown-toggle d-none d-lg-flex"
+             style="align-items:flex-start;gap:0;"
+             data-bs-toggle="dropdown" aria-expanded="false">
+            <span class="nav-action-label">Hello, {{ session.get('username','').split(' ')[0] }}</span>
+            <span class="nav-action-value">Account &amp; Lists <i class="fas fa-caret-down" style="font-size:10px;"></i></span>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end" style="min-width:200px;margin-top:8px;">
+            <li>
+              <div style="padding:10px 16px;font-size:13px;color:#555;">
+                Signed in as <strong>{{ session.get('username') }}</strong>
+              </div>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <a class="dropdown-item" href="{{ url_for('my_orders') }}">
+                <i class="fas fa-box me-2" style="color:#ff9900;"></i>My Orders
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="{{ url_for('cart') }}">
+                <i class="fas fa-shopping-cart me-2" style="color:#ff9900;"></i>My Cart
+              </a>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <a class="dropdown-item text-danger" href="{{ url_for('logout') }}">
+                <i class="fas fa-sign-out-alt me-2"></i>Sign Out
+              </a>
+            </li>
+          </ul>
+        </div>
+        {% else %}
+        <a href="{{ url_for('login') }}" class="nav-action d-none d-lg-flex flex-column" style="align-items:flex-start;gap:0;">
+          <span class="nav-action-label">Hello, sign in</span>
+          <span class="nav-action-value">Account &amp; Lists <i class="fas fa-caret-down" style="font-size:10px;"></i></span>
+        </a>
+        {% endif %}
+        <a href="{{ url_for('cart') }}" class="nav-action cart-btn">
+          <div style="position:relative;display:inline-block;">
+            <i class="cart-icon fas fa-shopping-cart"></i>
+            {% if cart_count() > 0 %}
+            <span class="cart-count-badge">{{ cart_count() }}</span>
+            {% endif %}
+          </div>
+          <span class="cart-word d-none d-md-inline">Cart</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Row 2: Search bar (full width) -->
+    <div class="nav-row-2">
+      <form action="{{ url_for('index') }}" method="get" style="width:100%;">
         <div class="search-wrap">
           <select name="category" class="search-cat">
-            <option value="">All Departments</option>
+            <option value="">All</option>
             {% for cat in ['Electronics','Audio','Footwear','Fashion','Wearables','Peripherals'] %}
             <option value="{{ cat }}" {% if request.args.get('category')==cat %}selected{% endif %}>{{ cat }}</option>
             {% endfor %}
           </select>
           <input type="search" name="q" class="search-input"
-                 placeholder="Search products, brands and categories…"
+                 placeholder="Search products, brands…"
                  value="{{ request.args.get('q','') }}" autocomplete="off"/>
           <button type="submit" class="search-btn" aria-label="Search">
             <i class="fas fa-search"></i>
@@ -64,6 +117,9 @@
         </div>
       </form>
     </div>
+
+  </div>
+</nav>
 
     <!-- Nav Actions -->
     <div class="nav-actions">
