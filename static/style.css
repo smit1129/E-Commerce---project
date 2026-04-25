@@ -1323,3 +1323,14 @@ img { display: block; max-width: 100%; }
   .cart-item { grid-template-columns: 72px 1fr; }
   .search-cat { width: 70px; font-size: 10px; }
 }
+
+@media (max-width: 768px) {
+  .nav-inner {
+    padding: 8px 12px;
+    gap: 8px;
+    background: var(--nav-mid); /* white gap fix */
+  }
+  .nav-row-2 {
+    padding-bottom: 4px;
+  }
+}

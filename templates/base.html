@@ -39,7 +39,7 @@
 <nav class="main-nav">
   <div class="nav-inner">
 
-    <!-- Row 1: Logo + Actions -->
+    <!-- Row 1: Logo + Cart -->
     <div class="nav-row-1">
       <a href="{{ url_for('index') }}" class="site-logo">
         <span class="logo-text">Shop</span><span class="logo-dot">Zone</span>
@@ -48,8 +48,8 @@
 
       <div class="nav-actions">
         {% if session.get('user_id') %}
-        <div class="dropdown">
-          <a href="#" class="nav-action flex-column dropdown-toggle d-none d-lg-flex"
+        <div class="dropdown d-none d-lg-flex">
+          <a href="#" class="nav-action flex-column dropdown-toggle"
              style="align-items:flex-start;gap:0;"
              data-bs-toggle="dropdown" aria-expanded="false">
             <span class="nav-action-label">Hello, {{ session.get('username','').split(' ')[0] }}</span>
@@ -86,6 +86,8 @@
           <span class="nav-action-value">Account &amp; Lists <i class="fas fa-caret-down" style="font-size:10px;"></i></span>
         </a>
         {% endif %}
+
+        <!-- Cart — sirf ek jagah -->
         <a href="{{ url_for('cart') }}" class="nav-action cart-btn">
           <div style="position:relative;display:inline-block;">
             <i class="cart-icon fas fa-shopping-cart"></i>
@@ -98,7 +100,7 @@
       </div>
     </div>
 
-    <!-- Row 2: Search bar (full width) -->
+    <!-- Row 2: Search bar -->
     <div class="nav-row-2">
       <form action="{{ url_for('index') }}" method="get" style="width:100%;">
         <div class="search-wrap">
