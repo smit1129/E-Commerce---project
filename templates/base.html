@@ -24,8 +24,6 @@
         <span class="topbar-divider">|</span>
         <a href="{{ url_for('my_orders') }}" class="topbar-link">📦 My Orders</a>
         <a href="{{ url_for('logout') }}" class="topbar-link">Sign Out</a>
-        <span class="topbar-divider">|</span>
-        <a href="{{ url_for('cart') }}" class="topbar-link"><i class="fas fa-heart me-1"></i>🛒 Cart</a>
       {% else %}
         <a href="{{ url_for('login') }}" class="topbar-link">Sign In</a>
         <span class="topbar-divider">|</span>
@@ -39,70 +37,15 @@
 <nav class="main-nav">
   <div class="nav-inner">
 
-    <!-- Row 1: Logo + Cart -->
-    <div class="nav-row-1">
-      <a href="{{ url_for('index') }}" class="site-logo">
-        <span class="logo-text">Shop</span><span class="logo-dot">Zone</span>
-        <span class="logo-badge">PRIME</span>
-      </a>
+    <!-- Logo -->
+    <a href="{{ url_for('index') }}" class="site-logo">
+      <span class="logo-text">Shop</span><span class="logo-dot">Zone</span>
+      <span class="logo-badge">PRIME</span>
+    </a>
 
-      <div class="nav-actions">
-        {% if session.get('user_id') %}
-        <div class="dropdown d-none d-lg-flex">
-          <a href="#" class="nav-action flex-column dropdown-toggle"
-             style="align-items:flex-start;gap:0;"
-             data-bs-toggle="dropdown" aria-expanded="false">
-            <span class="nav-action-label">Hello, {{ session.get('username','').split(' ')[0] }}</span>
-            <span class="nav-action-value">Account &amp; Lists <i class="fas fa-caret-down" style="font-size:10px;"></i></span>
-          </a>
-          <ul class="dropdown-menu dropdown-menu-end" style="min-width:200px;margin-top:8px;">
-            <li>
-              <div style="padding:10px 16px;font-size:13px;color:#555;">
-                Signed in as <strong>{{ session.get('username') }}</strong>
-              </div>
-            </li>
-            <li><hr class="dropdown-divider"></li>
-            <li>
-              <a class="dropdown-item" href="{{ url_for('my_orders') }}">
-                <i class="fas fa-box me-2" style="color:#ff9900;"></i>My Orders
-              </a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="{{ url_for('cart') }}">
-                <i class="fas fa-shopping-cart me-2" style="color:#ff9900;"></i>My Cart
-              </a>
-            </li>
-            <li><hr class="dropdown-divider"></li>
-            <li>
-              <a class="dropdown-item text-danger" href="{{ url_for('logout') }}">
-                <i class="fas fa-sign-out-alt me-2"></i>Sign Out
-              </a>
-            </li>
-          </ul>
-        </div>
-        {% else %}
-        <a href="{{ url_for('login') }}" class="nav-action d-none d-lg-flex flex-column" style="align-items:flex-start;gap:0;">
-          <span class="nav-action-label">Hello, sign in</span>
-          <span class="nav-action-value">Account &amp; Lists <i class="fas fa-caret-down" style="font-size:10px;"></i></span>
-        </a>
-        {% endif %}
-
-        <!-- Cart — sirf ek jagah -->
-        <a href="{{ url_for('cart') }}" class="nav-action cart-btn">
-          <div style="position:relative;display:inline-block;">
-            <i class="cart-icon fas fa-shopping-cart"></i>
-            {% if cart_count() > 0 %}
-            <span class="cart-count-badge">{{ cart_count() }}</span>
-            {% endif %}
-          </div>
-          <span class="cart-word d-none d-md-inline">Cart</span>
-        </a>
-      </div>
-    </div>
-
-    <!-- Row 2: Search bar -->
-    <div class="nav-row-2">
-      <form action="{{ url_for('index') }}" method="get" style="width:100%;">
+    <!-- Search -->
+    <div class="nav-search">
+      <form action="{{ url_for('index') }}" method="get">
         <div class="search-wrap">
           <select name="category" class="search-cat">
             <option value="">All</option>
@@ -120,51 +63,50 @@
       </form>
     </div>
 
-  </div>
-</nav>
-
     <!-- Nav Actions -->
     <div class="nav-actions">
-      
-{% if session.get('user_id') %}
-<div class="dropdown d-none d-lg-flex">
-  <a href="#" class="nav-action flex-column dropdown-toggle" 
-     style="align-items:flex-start;gap:0;" 
-     data-bs-toggle="dropdown" aria-expanded="false">
-    <span class="nav-action-label">Hello, {{ session.get('username','').split(' ')[0] }}</span>
-    <span class="nav-action-value">Account &amp; Lists <i class="fas fa-caret-down" style="font-size:10px;"></i></span>
-  </a>
-  <ul class="dropdown-menu dropdown-menu-end" style="min-width:200px;margin-top:8px;">
-    <li>
-      <div style="padding:10px 16px;font-size:13px;color:#555;">
-        Signed in as <strong>{{ session.get('username') }}</strong>
+      {% if session.get('user_id') %}
+      <div class="dropdown d-none d-lg-flex">
+        <a href="#" class="nav-action flex-column dropdown-toggle"
+           style="align-items:flex-start;gap:0;"
+           data-bs-toggle="dropdown" aria-expanded="false">
+          <span class="nav-action-label">Hello, {{ session.get('username','').split(' ')[0] }}</span>
+          <span class="nav-action-value">Account &amp; Lists <i class="fas fa-caret-down" style="font-size:10px;"></i></span>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end" style="min-width:200px;margin-top:8px;">
+          <li>
+            <div style="padding:10px 16px;font-size:13px;color:#555;">
+              Signed in as <strong>{{ session.get('username') }}</strong>
+            </div>
+          </li>
+          <li><hr class="dropdown-divider"></li>
+          <li>
+            <a class="dropdown-item" href="{{ url_for('my_orders') }}">
+              <i class="fas fa-box me-2" style="color:#ff9900;"></i>My Orders
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item" href="{{ url_for('cart') }}">
+              <i class="fas fa-shopping-cart me-2" style="color:#ff9900;"></i>My Cart
+            </a>
+          </li>
+          <li><hr class="dropdown-divider"></li>
+          <li>
+            <a class="dropdown-item text-danger" href="{{ url_for('logout') }}">
+              <i class="fas fa-sign-out-alt me-2"></i>Sign Out
+            </a>
+          </li>
+        </ul>
       </div>
-    </li>
-    <li><hr class="dropdown-divider"></li>
-    <li>
-      <a class="dropdown-item" href="{{ url_for('my_orders') }}">
-        <i class="fas fa-box me-2" style="color:#ff9900;"></i>My Orders
+      {% else %}
+      <a href="{{ url_for('login') }}" class="nav-action d-none d-lg-flex flex-column"
+         style="align-items:flex-start;gap:0;">
+        <span class="nav-action-label">Hello, sign in</span>
+        <span class="nav-action-value">Account &amp; Lists <i class="fas fa-caret-down" style="font-size:10px;"></i></span>
       </a>
-    </li>
-    <li>
-      <a class="dropdown-item" href="{{ url_for('cart') }}">
-        <i class="fas fa-shopping-cart me-2" style="color:#ff9900;"></i>My Cart
-      </a>
-    </li>
-    <li><hr class="dropdown-divider"></li>
-    <li>
-      <a class="dropdown-item text-danger" href="{{ url_for('logout') }}">
-        <i class="fas fa-sign-out-alt me-2"></i>Sign Out
-      </a>
-    </li>
-  </ul>
-</div>
-{% else %}
-<a href="{{ url_for('login') }}" class="nav-action d-none d-lg-flex flex-column" style="align-items:flex-start;gap:0;">
-  <span class="nav-action-label">Hello, sign in</span>
-  <span class="nav-action-value">Account &amp; Lists <i class="fas fa-caret-down" style="font-size:10px;"></i></span>
-</a>
-{% endif %}
+      {% endif %}
+
+      <!-- Cart — sirf ek jagah -->
       <a href="{{ url_for('cart') }}" class="nav-action cart-btn">
         <div style="position:relative;display:inline-block;">
           <i class="cart-icon fas fa-shopping-cart"></i>
@@ -183,9 +125,9 @@
 <div class="cat-strip">
   <div class="cat-strip-inner">
     <a href="{{ url_for('index') }}"
-   class="cat-strip-link {% if request.path == '/' %}active{% endif %}">
-   <i class="fas fa-bars"></i> All
-</a>
+       class="cat-strip-link {% if request.path == '/' %}active{% endif %}">
+      <i class="fas fa-bars"></i> All
+    </a>
     {% for cat, icon in [
       ('Electronics','fa-laptop'),('Audio','fa-headphones'),('Footwear','fa-shoe-prints'),
       ('Fashion','fa-tshirt'),('Wearables','fa-stopwatch'),('Peripherals','fa-keyboard')
@@ -196,8 +138,8 @@
     </a>
     {% endfor %}
     <a href="{{ url_for('deals') }}"
-    class="cat-strip-link deals-link {% if request.path == '/deals' %}active{% endif %}">
-    <i class="fas fa-fire"></i> Today's Deals
+       class="cat-strip-link deals-link {% if request.path == '/deals' %}active{% endif %}">
+      <i class="fas fa-fire"></i> Today's Deals
     </a>
     <a href="{{ url_for('cart') }}" class="cat-strip-link">
       <i class="fas fa-truck"></i> Fast Delivery
@@ -227,6 +169,9 @@
 <main>{% block content %}{% endblock %}</main>
 
 <!-- ── FOOTER ───────────────────────────────────────── -->
+<div class="footer-back-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+  <i class="fas fa-chevron-up me-2"></i>Back to top
+</div>
 
 <footer class="site-footer">
   <div class="footer-main">
@@ -259,7 +204,7 @@
   <div class="footer-bottom">
     <div class="footer-bottom-inner">
       <div><span class="logo-text">Shop</span><span class="logo-dot">Zone</span></div>
-      <span class="footer-copy">© {{ 2026 }} ShopZone — Developed by Smit Gamit</span>
+      <span class="footer-copy">© 2026 ShopZone — Developed by Smit Gamit</span>
       <div class="footer-legal">
         <a href="#">Privacy Notice</a>
         <a href="#">Conditions of Use</a>
@@ -270,13 +215,11 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-// Auto-dismiss alerts after 4s
 setTimeout(() => {
   document.querySelectorAll('.alert').forEach(el => {
     try { bootstrap.Alert.getOrCreateInstance(el).close(); } catch(e){}
   });
 }, 4000);
-// Qty controls
 document.addEventListener('click', e => {
   if (e.target.classList.contains('qty-btn-minus')) {
     const inp = e.target.parentElement.querySelector('.qty-num');
