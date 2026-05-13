@@ -5,14 +5,11 @@ from flask import Flask, render_template, redirect, url_for, request, session, f
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 
-from dotenv import load_dotenv
-load_dotenv()
-
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'shopzone-secret-key-2024')
 
+DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://postgres.ijgtygmmnsfuunycwbgz:Shopzone2025!@aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres')
 
-DATABASE_URL = os.environ.get('DATABASE_URL')
 def get_db():
     if 'db' not in g:
         conn = psycopg2.connect(DATABASE_URL)
@@ -139,6 +136,16 @@ def init_db():
             print(f'⚠️ Could not seed: {exc}')
 
     db.close()
+
+# ── Init DB on first request ──────────────────────────
+@app.before_request
+def setup():
+    if not getattr(app, '_db_initialized', False):
+        try:
+            init_db()
+            app._db_initialized = True
+        except Exception as e:
+            print(f'DB init error: {e}')
 
 # ══════════════════════════════════════════════════════
 # MAIN ROUTES
@@ -517,7 +524,6 @@ def admin_delete_user(uid):
     flash('User deleted!', 'success')
     return redirect(url_for('admin_users'))
 
-init_db()
-
-# Vercel expects variable named "app"
-app = app
+if __name__ == '__main__':
+    init_db()
+    app.run(debug=False, host='0.0.0.0', port=5000)
